@@ -2,10 +2,12 @@ import json
 import boto3
 import streamlit as st
 from typing import Dict, List
+from streamer import SmrInferenceStream
 
 # st.title('🦜🔗 Quickstart App')
-session = boto3.session.Session()
+session = boto3.session.Session(profile_name='saml')
 endpoint_name = "jumpstart-dft-hf-llm-mistral-7b-instruct"
+sagemaker_runtime = session.client('sagemaker-runtime')
 
 def format_instructions(instructions: List[Dict[str, str]]) -> List[str]:
     """Format instructions where conversation roles must alternate user/assistant/user/assistant/..."""
@@ -24,7 +26,7 @@ def print_instructions(prompt: str, response: str) -> None:
 def generate_payload(instructions: List[Dict[str, str]]) -> Dict[str, str]:
     return {
     "inputs": format_instructions(instructions),
-    "parameters": {"max_new_tokens": 256, "do_sample": True}
+    "parameters": {"max_new_tokens": 512, "do_sample": True}
 }
 
 
@@ -60,7 +62,7 @@ if prompt := st.chat_input(disabled=False):
     with st.chat_message("user"):
         st.write(prompt)
 
-# # Generate a new response if last message is not from assistant
+# Generate a new response if last message is not from assistant
 if st.session_state.messages[-1]["role"] != "assistant":
     with st.chat_message("assistant"):
         with st.spinner("Thinking..."):
@@ -75,3 +77,4 @@ if st.session_state.messages[-1]["role"] != "assistant":
             placeholder.markdown(full_response)
     message = {"role": "assistant", "content": full_response}
     st.session_state.messages.append(message)
+
